@@ -27,19 +27,42 @@ def load_data():
 def load_model():
     """Load trained model and preprocessor"""
     model_path = 'best_price_predictor.pkl'
-    
-    # Check if model already exists locally
+
     if not os.path.exists(model_path):
         st.info("Downloading model...")
-        # Download from Google Drive
+
+        # --- Google Drive large file download with confirmation token ---
+        def download_file_from_google_drive(file_id, destination):
+            URL = "https://docs.google.com/uc?export=download"
+
+            session = requests.Session()
+            response = session.get(URL, params={'id': file_id}, stream=True)
+            token = get_confirm_token(response)
+
+            if token:
+                params = {'id': file_id, 'confirm': token}
+                response = session.get(URL, params=params, stream=True)
+
+            save_response_content(response, destination)
+
+        def get_confirm_token(response):
+            for key, value in response.cookies.items():
+                if key.startswith('download_warning'):
+                    return value
+            return None
+
+        def save_response_content(response, destination):
+            CHUNK_SIZE = 32768
+
+            with open(destination, "wb") as f:
+                for chunk in response.iter_content(CHUNK_SIZE):
+                    if chunk:  # filter out keep-alive new chunks
+                        f.write(chunk)
+
+        # Your Google Drive file ID
         file_id = '1tkHVw8_7J3UcI652ef_tboY7gUucEwVs'
-        url = f"https://drive.google.com/uc?export=download&id={file_id}"
-        response = requests.get(url)
-        
-        # Save the file
-        with open(model_path, 'wb') as f:
-            f.write(response.content)
-        
+        download_file_from_google_drive(file_id, model_path)
+
     # Load model
     model = joblib.load(model_path)
     return model['model'], model['preprocessor']
@@ -49,10 +72,8 @@ TARGET = 'Unit_Price_UGX'
 
 def preprocess_data(data):
     """Feature engineering for model training/prediction"""
-    # Start with dashboard features
     processed = load_data()
-    
-    # Additional modeling-specific processing
+
     to_drop = ['CIF_Value_UGX', 'Invoice_Amount', 'Value_per_kg', 
                'Value_per_unit', 'Date']
     
