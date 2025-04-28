@@ -1,6 +1,8 @@
 import pandas as pd
 import joblib
 import streamlit as st
+import os
+import requests
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
@@ -13,7 +15,7 @@ def load_data():
     # Create essential features for reports
     df['Value_Density'] = df['CIF_Value_USD'] / (df['Gross_Mass_kg'] + 1e-6)
     df['Tax_Load'] = df['Tax_Rate'] * df['CIF_Value_USD']
-    df['Import_Duration'] = df['Year'] + df['Month']/12
+    df['Import_Duration'] = df['Year'] + df['Month'] / 12
     df['FOB_per_kg'] = df['FOB_Value_USD'] / (df['Gross_Mass_kg'] + 1e-6)
     df['Freight_per_kg'] = df['Freight_USD'] / (df['Gross_Mass_kg'] + 1e-6)
     df['Insurance_per_kg'] = df['Insurance_USD'] / (df['Gross_Mass_kg'] + 1e-6)
@@ -24,7 +26,22 @@ def load_data():
 @st.cache_resource
 def load_model():
     """Load trained model and preprocessor"""
-    model = joblib.load('best_price_predictor.pkl')
+    model_path = 'best_price_predictor.pkl'
+    
+    # Check if model already exists locally
+    if not os.path.exists(model_path):
+        st.info("Downloading model...")
+        # Download from Google Drive
+        file_id = '1tkHVw8_7J3UcI652ef_tboY7gUucEwVs'
+        url = f"https://drive.google.com/uc?export=download&id={file_id}"
+        response = requests.get(url)
+        
+        # Save the file
+        with open(model_path, 'wb') as f:
+            f.write(response.content)
+        
+    # Load model
+    model = joblib.load(model_path)
     return model['model'], model['preprocessor']
 
 # ---- MODELING PREPROCESSING ----
@@ -37,7 +54,7 @@ def preprocess_data(data):
     
     # Additional modeling-specific processing
     to_drop = ['CIF_Value_UGX', 'Invoice_Amount', 'Value_per_kg', 
-              'Value_per_unit', 'Date']
+               'Value_per_unit', 'Date']
     
     return processed.drop(columns=to_drop, errors='ignore')
 
@@ -60,4 +77,5 @@ preprocessor = ColumnTransformer(
     transformers=[
         ('num', StandardScaler(), numeric_features),
         ('cat', OneHotEncoder(handle_unknown='ignore', sparse_output=False), categorical_features)
-    ])
+    ]
+)
