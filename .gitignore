@@ -1,0 +1,14 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment folders
+.venv/
+env/
+
+# Environment variables file
+.env
+
+# Logs
+*.log
+*.pkl
