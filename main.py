@@ -13,15 +13,12 @@ st.set_page_config(
 with open('app/assets/style.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
-# Main navigation
+# Sidebar Navigation
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Choose a page:", 
-    ["📊 Dashboard", 
-     "📈 Analytical Reports", 
-     "🔮 Price Predictions",
-     "🌍 About Project"])
+    ["📊 Dashboard", "📈 Analytical Reports", "🔮 Price Predictions", "🌍 About Project"])
 
-# Page routing
+# Route to pages
 if page == "📊 Dashboard":
     import app.pages.dashboard as dashboard
     dashboard.render()
@@ -35,7 +32,7 @@ elif page == "🌍 About Project":
     import app.pages.about as about
     about.render()
 
-# Adding footer to all pages
+# Global footer
 st.markdown("""
 <div style="text-align: center; margin-top: 2rem; color: #666;">
     <hr style="border: 0.5px solid #ddd;">
